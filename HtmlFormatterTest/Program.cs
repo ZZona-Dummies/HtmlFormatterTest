@@ -8,6 +8,11 @@ using System.Text;
 using System.Threading.Tasks;
 using TidyManaged;
 
+//using Tidy.Core;
+
+//using HTMLTidy = Tidy.Core.Tidy;
+using TidyNet;
+
 namespace HtmlFormatterTest
 {
     internal class Program
@@ -19,7 +24,7 @@ namespace HtmlFormatterTest
 
             string cleanHtml = CleanHtml(dirtyHtml);
 
-            string filePath = Path.Combine(Assembly.GetExecutingAssembly().Location, "test.html");
+            string filePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "test.html");
             File.WriteAllText(filePath, cleanHtml);
 
             Console.Read();
@@ -27,14 +32,24 @@ namespace HtmlFormatterTest
 
         private static string CleanHtml(string dirtyHtml)
         {
-            using (Document doc = Document.FromString(dirtyHtml))
-            {
-                doc.OutputBodyOnly = AutoBool.Yes;
-                doc.Quiet = true;
-                doc.CleanAndRepair();
+            var tidy = new TidyNet.Tidy();
+            var messages = new TidyMessageCollection();
 
-                return doc.Save();
+            using (var inStream = new MemoryStream(Encoding.Default.GetBytes(dirtyHtml)))
+            using (var outStream = new MemoryStream())
+            {
+                tidy.Parse(inStream, outStream, messages);
+                return Encoding.Default.GetString(outStream.ToArray());
             }
+
+            //using (Document doc = Document.FromString(dirtyHtml))
+            //{
+            //    doc.OutputBodyOnly = AutoBool.Yes;
+            //    doc.Quiet = true;
+            //    doc.CleanAndRepair();
+
+            //    return doc.Save();
+            //}
         }
     }
 }
